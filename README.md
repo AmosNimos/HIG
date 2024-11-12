@@ -1,5 +1,5 @@
 <body>
-    <h1>HIG - Highlight In General</h1>
+    <h1><img src="format-text-highlight.255x256.png" alt="Highlight icon" data="https://iconduck.com/icons/14463/format-text-highlight" width="32px" height="32px"> HIG - Highlight In General</h1>
     <p><strong>Author:</strong> Amosnimos<br>
     <strong>License:</strong> GNU Affero General Public License</p>
     <p><strong>Description:</strong> HIG (Highlight In General): A simple bash utility to highlight specified words in piped or file input with customizable colors, preserving the original text.</p>
