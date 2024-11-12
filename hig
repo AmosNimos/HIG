@@ -1,0 +1,113 @@
+#!/bin/bash
+################################################################################
+# Name:        hig
+# Date:        2024-11-12
+# Author:      Amosnimos
+# Description: Highlight specified words in piped or file input, with customizable background or foreground colors, without altering the original text.
+################################################################################
+
+# ▌ ▌▜▘▞▀▖
+# ▙▄▌▐ ▌▄▖
+# ▌ ▌▐ ▌ ▌
+# ▘ ▘▀▘▝▀ 
+
+
+# Function to print text with highlighting
+highlight_text() {
+    local search="$1"
+    local input="$2"
+    local color="$3"
+    local invert_fg="$4"
+
+    # Define color codes
+    declare -A colors=(
+        [red]="\033[41m"       # Background Red
+        [green]="\033[42m"     # Background Green
+        [yellow]="\033[43m"    # Background Yellow
+        [blue]="\033[44m"      # Background Blue
+        [purple]="\033[45m"    # Background Purple
+        [cyan]="\033[46m"      # Background Cyan
+        [white]="\033[47m"     # Background White
+        [black]="\033[40m"     # Background Black
+        [text_black]="\033[30m" # Text Black
+        [text_white]="\033[37m" # Text White
+        [reset]="\033[0m"      # Reset
+    )
+
+    # Set default highlight colors
+    local highlight_bg="${colors[$color]:-${colors[yellow]}}"
+    local default_fg_color="${colors[text_white]}"
+    local default_bg="${colors[black]}"
+
+    # If invert flag is set, use color for text and keep background black
+    local highlight="${highlight_bg}${colors[text_black]}"
+    if [[ "$invert_fg" == "true" ]]; then
+        highlight="${colors[black]}${colors[${color}]}"
+    fi
+
+    # Process each line from input
+    while IFS= read -r line; do
+        if [[ -z "$search" ]]; then
+            # Print without highlights if no search term
+            echo -e "${default_bg}${default_fg_color}${line}${colors[reset]}"
+        else
+            # Highlight with background or foreground based on invert flag
+            echo -e "${line//${search}/${highlight}${search}${colors[reset]}}"
+        fi
+    done <<< "$input"
+}
+
+# Default values
+search_string=""
+highlight_color="yellow"
+invert_fg="false"
+file_input=""
+
+# Function to display help
+print_help() {
+    cat << EOF
+Usage: hig -s <search_term> [-f <filename>] [-c <color>] [-i] [-h]
+
+Options:
+  -s, --search <search_term>   Word to highlight in the input text.
+  -f, --file <filename>        Optional: specify file input instead of pipe.
+  -c, --color <color>          Optional: background color for highlighting (default: yellow).
+  -i, --invert                 Optional: invert highlight to color text instead of background.
+  -h, --help                   Display this help message.
+
+Description:
+  Hig highlights all occurrences of <search_term> in piped or file input.
+  By default, highlighted text is black on a yellow background; use -c to change
+  background color, or -i to invert and color text instead.
+
+Examples:
+  echo "hello world" | hig -s world           # Highlight "world" with default colors
+  echo "hello world" | hig -s world -c red    # Highlight "world" with red background
+  echo "hello world" | hig -s world -i        # Highlight "world" with yellow text
+
+EOF
+}
+
+# Parsing options
+while [[ "$#" -gt 0 ]]; do
+    case "$1" in
+        -h|--help) print_help; exit 0;;
+        -s|--search) search_string="$2"; shift 2;;
+        -c|--color) highlight_color="$2"; shift 2;;
+        -f|--file) file_input="$2"; shift 2;;
+        -i|--invert) invert_fg="true"; shift;;
+        *) echo "Unknown option: $1" >&2; print_help; exit 1;;
+    esac
+done
+
+# Check if input is from a pipe or file
+if [[ -n "$file_input" ]]; then
+    input="$(<"$file_input")"
+elif [[ ! -t 0 ]]; then
+    input="$(cat)"
+else
+    exit 0  # Exit if neither file nor pipe input
+fi
+
+# Run the highlighting function
+highlight_text "$search_string" "$input" "$highlight_color" "$invert_fg"
